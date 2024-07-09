@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32
 from mass_spring_msgs.srv import Setpoint
+from mass_spring_msgs.msg import State
 
 # This controller subscribes to the state of the system, and
 # then calculates a control effort and publishes it.
@@ -11,15 +12,16 @@ class Controller(Node):
         super().__init__("controller")
 
         # Controller gains
-        self.kp = 1.0 
-        self.kd = 1.0
-        self.ki = 1.0
+        self.declare_parameter('kp', -10.0)
+        self.declare_parameter('kd', -4.0)
+        self.declare_parameter('ki', -0.03)
         
         # Frequency of the control in Hz.
-        self.control_frequency = 50
+        self.control_frequency = 100
         self.Ts = 1/self.control_frequency
 
         self.control_publisher = self.create_publisher(Float32, "control", 10)
+        self.state_sub = self.create_subscription(State, "state", self.state_callback, 10)
 
         self.control_timer = self.create_timer(self.Ts, self.control)
 
@@ -32,15 +34,23 @@ class Controller(Node):
         self.commanded_position = 2.2
 
         self.position = 0.0
+        self.velocity = 0.0
+
+    def state_callback(self, msg):
+        self.position = msg.position
+        self.velocity = msg.velocity
 
     def control(self):
+
+        kp = self.get_parameter('kp').get_parameter_value().double_value
+        kd = self.get_parameter('kd').get_parameter_value().double_value
+        ki = self.get_parameter('ki').get_parameter_value().double_value
         
         # Compute control effort using PID
         self.error = self.position - self.commanded_position
-        error_dot = (self.error - self.prev_error)/(self.Ts)
         self.integrator += self.Ts/2.0 * self.error + self.prev_error
 
-        u = self.kp*self.error + self.kd*error_dot + self.ki*self.integrator
+        u = kp*self.error + kd*self.velocity + ki*self.integrator
 
         msg = Float32()
 
