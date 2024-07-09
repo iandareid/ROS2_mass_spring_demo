@@ -35,7 +35,7 @@ include_directories(
 ## EXTRA FILES ##
 #################
 install(
-  DIRECTORY launch params
+  DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
 )
 
