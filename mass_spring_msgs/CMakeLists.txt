@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(mass_spring_srvs)
+project(mass_spring_msgs)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -22,12 +22,17 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
+set(msg_files
+  "msg/State.msg"
+)
+
 set(srv_files
   "srv/Setpoint.srv"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${srv_files}
+  ${msg_files}
 )
 
 if(BUILD_TESTING)

@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32
-from mass_spring_srvs.srv import Setpoint
+from mass_spring_msgs.srv import Setpoint
 
 # This controller subscribes to the state of the system, and
 # then calculates a control effort and publishes it.
