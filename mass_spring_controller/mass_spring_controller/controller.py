@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32
-
+from mass_spring_srvs.srv import Setpoint
 
 # This controller subscribes to the state of the system, and
 # then calculates a control effort and publishes it.
@@ -22,6 +22,8 @@ class Controller(Node):
         self.control_publisher = self.create_publisher(Float32, "control", 10)
 
         self.control_timer = self.create_timer(self.Ts, self.control)
+
+        self.setpoint_service = self.create_service(Setpoint, 'set_setpoint', self.setpoint_callback)
 
         self.error = 0.0
         self.prev_error = 0.0
@@ -45,6 +47,12 @@ class Controller(Node):
         msg.data = u
 
         self.control_publisher.publish(msg)
+
+    def setpoint_callback(self, request, response):
+        self.commanded_position = request.setpoint
+        response.success = True
+        response.message = f"The setpoint was set to {self.commanded_position}"
+        return response
 
 def main():
     rclpy.init()
