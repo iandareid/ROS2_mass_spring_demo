@@ -23,6 +23,7 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(mass_spring_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 
 ##################
 ## INCLUDE DIRS ##
@@ -35,7 +36,7 @@ include_directories(
 ## EXTRA FILES ##
 #################
 install(
-  DIRECTORY launch
+  DIRECTORY launch config
   DESTINATION share/${PROJECT_NAME}
 )
 
@@ -45,7 +46,7 @@ install(
 add_executable(simulator
   src/simulator.cpp
 )
-ament_target_dependencies(simulator mass_spring_msgs rclcpp std_msgs)
+ament_target_dependencies(simulator mass_spring_msgs rclcpp std_msgs visualization_msgs)
 install(TARGETS
   simulator
   DESTINATION lib/${PROJECT_NAME}

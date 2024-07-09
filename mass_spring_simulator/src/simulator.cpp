@@ -1,6 +1,8 @@
+#include "simulator.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "mass_spring_msgs/msg/state.hpp"
 #include "std_msgs/msg/float32.hpp"
+#include "visualization_msgs/msg/marker.hpp"
 #include <chrono>
 
 using std::placeholders::_1;
@@ -9,36 +11,14 @@ using namespace std::chrono_literals;
 namespace simulator
 {
 
-class Simulator : public rclcpp::Node
-{
-public:
-    Simulator();
-
-private:
-    rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr control_sub_;
-    rclcpp::Publisher<mass_spring_msgs::msg::State>::SharedPtr state_pub_;
-    rclcpp::TimerBase::SharedPtr update_timer_;
-
-    void controlCallback(std_msgs::msg::Float32 msg);
-    void publishState();
-    void rk4_step();
-    void f(double (&tmp_state)[2], double (&return_vector)[2]);
-
-    double control_cmd_;
-    double state_[2];
-
-    double m = 2.0;
-    double k = 2.5;
-    double b = 0.1;
-    double Ts = 0.01;
-};
-
 Simulator::Simulator() : Node("simulator")
 {
     // set up publishers and subscribers
     control_sub_ = this->create_subscription<std_msgs::msg::Float32>("control", 10,
         std::bind(&Simulator::controlCallback, this, _1));
     state_pub_ = this->create_publisher<mass_spring_msgs::msg::State>("state", 10);
+    rviz_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("mass", 10);
+    rviz_spring_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("spring", 10);
 
     // Set up timer
     update_timer_ = this->create_wall_timer(10ms, std::bind(&Simulator::publishState, this));
@@ -48,6 +28,44 @@ Simulator::Simulator() : Node("simulator")
     for (int i=0; i<2; i++) {
         state_[i] = 0.0;
     }
+
+    block_.header.frame_id = "map";
+    block_.ns = "block";
+    block_.id = 0;
+    block_.type = visualization_msgs::msg::Marker::CUBE;
+    block_.action = visualization_msgs::msg::Marker::ADD;
+    block_.pose.position.x = state_[0] + 3.0;
+    block_.pose.position.y = 0.0;
+    block_.pose.position.z = 0.5;
+    block_.scale.x = 1.0;
+    block_.scale.y = 1.0;
+    block_.scale.z = 1.0;
+    block_.color.r = 1.0f;
+    block_.color.g = 0.0f;
+    block_.color.b = 0.0f;
+    block_.color.a = 1.0;
+
+    geometry_msgs::msg::Point p1;
+    p1.x = 0.0;
+    p1.y = 0.0;
+    p1.z = 0.5;
+    p2_.x = state_[0] + 3.0;
+    p2_.y = 0.0;
+    p2_.z = 0.5;
+    spring_points_.push_back(p1);
+    spring_points_.push_back(p2_);
+
+    spring_.header.frame_id = "map";
+    spring_.ns = "spring";
+    spring_.id = 0;
+    spring_.type = visualization_msgs::msg::Marker::LINE_LIST;
+    spring_.action = visualization_msgs::msg::Marker::ADD;
+    spring_.scale.x = 0.2;
+    spring_.color.r = 0.0f;
+    spring_.color.g = 1.0f;
+    spring_.color.b = 0.0f;
+    spring_.color.a = 1.0;
+    spring_.points = spring_points_;
 }
 
 void Simulator::controlCallback(std_msgs::msg::Float32 msg) {
@@ -58,10 +76,22 @@ void Simulator::publishState() {
     // Insert integration here
     rk4_step();
 
+    // Publish the state
     mass_spring_msgs::msg::State msg;
     msg.position = state_[0];
     msg.velocity = state_[1];
     state_pub_->publish(msg);
+
+    // Publish to Rviz
+    block_.pose.position.x = state_[0] + 3.0;
+    p2_.x = state_[0] + 3.0;
+    spring_points_[1] = p2_;
+    spring_.points = spring_points_;
+
+    rviz_pub_->publish(block_);
+    rviz_spring_pub_->publish(spring_);
+
+    // RCLCPP_INFO_STREAM(this->get_logger(), sizeof(spring_points_) / sizeof(geometry_msgs::msg::Point));
 }
 
 void Simulator::rk4_step() {
