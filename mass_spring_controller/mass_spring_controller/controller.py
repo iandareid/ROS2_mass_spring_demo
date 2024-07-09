@@ -59,6 +59,8 @@ class Controller(Node):
         self.control_publisher.publish(msg)
 
     def setpoint_callback(self, request, response):
+        self.get_logger().info('Changing setpoint.')
+
         self.commanded_position = request.setpoint
         response.success = True
         response.message = f"The setpoint was set to {self.commanded_position}"
