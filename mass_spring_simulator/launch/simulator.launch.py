@@ -7,8 +7,7 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     rviz_config_file = os.path.join(get_package_share_directory('mass_spring_simulator'), 'config', 'simulator_config.rviz')
-
-    print(rviz_config_file)
+    controller_params_file = os.path.join(get_package_share_directory('mass_spring_controller', 'params', 'controller_gains.yaml'))
 
     return LaunchDescription([
         Node(
