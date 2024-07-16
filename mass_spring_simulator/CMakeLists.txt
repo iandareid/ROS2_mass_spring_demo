@@ -44,6 +44,7 @@ install(
 ## SIM EXECUTABLE ##
 ####################
 add_executable(simulator
+  src/simulator_node.cpp
   src/simulator.cpp
 )
 ament_target_dependencies(simulator mass_spring_msgs rclcpp std_msgs visualization_msgs)
@@ -52,16 +53,28 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
+add_library(simulator_lib include/simulator.hpp src/simulator.cpp)
+target_link_libraries(simulator simulator_lib)
+ament_target_dependencies(simulator_lib rclcpp rclcpp std_msgs visualization_msgs mass_spring_msgs)
+
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # comment the line when a copyright and license is added to all source files
-  set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # comment the line when this package is in a git repo and when
-  # a copyright and license is added to all source files
-  set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(mass_spring_test test/mass_test.cpp)
+  ament_target_dependencies(mass_spring_test mass_spring_msgs rclcpp std_msgs visualization_msgs)
+  target_include_directories(mass_spring_test PUBLIC
+    include
+    include>
+  )
+  target_link_libraries(mass_spring_test simulator_lib) 
+  # find_package(ament_lint_auto REQUIRED)
+  # # the following line skips the linter which checks for copyrights
+  # # comment the line when a copyright and license is added to all source files
+  # set(ament_cmake_copyright_FOUND TRUE)
+  # # the following line skips cpplint (only works in a git repo)
+  # # comment the line when this package is in a git repo and when
+  # # a copyright and license is added to all source files
+  # set(ament_cmake_cpplint_FOUND TRUE)
+  # ament_lint_auto_find_test_dependencies()
 endif()
 
 ament_package()

@@ -133,10 +133,3 @@ void Simulator::f(double (&tmp_state)[2], double (&return_vector)[2]) {
 }
 
 } // namespace simulator
-
-int main(int argc, char** argv) {
-    rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<simulator::Simulator>());
-
-    return 0;
-}
